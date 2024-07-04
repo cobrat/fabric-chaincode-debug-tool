@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,23 +16,24 @@ import { useAuth } from "./AuthContext";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [id, setId] = useState("");
   const [secret, setSecret] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [loading] = useState(false);
 
-  const handleLogin = async () => {
-    setError("");
-    setLoading(true);
-
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       await login(id, secret);
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Failed to login. Please check your credentials and try again.");
-    } finally {
-      setLoading(false);
+      // 登录成功后，重定向到原始目标URL或默认到dashboard
+      const origin = (location.state as any)?.from?.pathname || '/dashboard';
+      navigate(origin);
+    } catch (error) {
+      console.error('Login failed:', error);
+      // 处理登录错误，例如显示错误消息
+      setError('Login failed: ' + error);
     }
   };
 
@@ -82,3 +83,7 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+function setError(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
