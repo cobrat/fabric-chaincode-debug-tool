@@ -25,7 +25,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from "@/components/ui/card";
+
 import {
   Select,
   SelectContent,
@@ -58,14 +66,12 @@ interface IdentityResponse {
 }
 
 interface RequestForm {
-  function: string;
+  type: "invoke" | "query";
+  method: string;
   args: string[];
 }
 
-interface HistoryItem {
-  type: "invoke" | "query";
-  function: string;
-  args: string[];
+interface HistoryItem extends RequestForm {
   response: string;
 }
 
@@ -156,15 +162,14 @@ const Dashboard: React.FC = () => {
   const currentUser = userInfo?.response.identities[0];
 
   const [requests, setRequests] = useState<RequestForm[]>([
-    { function: "", args: [""] },
+    { type: "invoke", method: "", args: [""] },
   ]);
-
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [channelId, setChannelId] = useState("");
   const [chaincodeId, setChaincodeId] = useState("");
 
   const addRequest = () => {
-    setRequests([...requests, { function: "", args: [""] }]);
+    setRequests([...requests, { type: "invoke", method: "", args: [""] }]);
   };
 
   const deleteRequest = (index: number) => {
@@ -196,32 +201,37 @@ const Dashboard: React.FC = () => {
     setRequests(newRequests);
   };
 
-  const handleSubmit = async (type: "invoke" | "query") => {
+  const handleSubmit = async (request: RequestForm, index: number) => {
+    if (!channelId || !chaincodeId) {
+      alert("Please enter Channel ID and Chaincode ID");
+      return;
+    }
+
     try {
-      const responses = await Promise.all(
-        requests.map(async (request) => {
-          const response = await api.post(
-            `/${type}/${channelId}/${chaincodeId}`,
-            {
-              method: request.function,
-              args: request.args,
-            }
-          );
-          return response.data.response;
-        })
+      const response = await api.post(
+        `/${request.type}/${channelId}/${chaincodeId}`,
+        {
+          method: request.method,
+          args: request.args,
+        }
       );
 
-      const newHistoryItems: HistoryItem[] = requests.map((request, index) => ({
-        type,
-        function: request.function,
-        args: request.args,
-        response: JSON.stringify(responses[index], null, 2),
-      }));
+      const newHistoryItem: HistoryItem = {
+        ...request,
+        response: JSON.stringify(response.data.response, null, 2),
+      };
 
-      setHistory([...newHistoryItems, ...history]);
+      setHistory([newHistoryItem, ...history]);
+
+      // Optionally, clear the request form after successful submission
+      setRequests(
+        requests.map((req, i) =>
+          i === index ? { type: "invoke", method: "", args: [""] } : req
+        )
+      );
     } catch (error) {
       console.error("Error submitting request:", error);
-      // Handle error (e.g., show error message to user)
+      alert("Error submitting request. Please try again.");
     }
   };
 
@@ -311,7 +321,7 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
-      <h2 className="text-xl font-bold">Chaincode Invoke/Query Request</h2>
+        <h2 className="text-xl font-bold">Chaincode Invoke/Query Request</h2>
 
         <div className="p-4">
           <div className="flex space-x-4 mb-4">
@@ -320,14 +330,36 @@ const Dashboard: React.FC = () => {
               value={channelId}
               onChange={(e) => setChannelId(e.target.value)}
             />
+            <Button onClick={handleChannelDiscovery}>Channel Discovery</Button>
             <Input
               placeholder="Chaincode ID"
               value={chaincodeId}
               onChange={(e) => setChaincodeId(e.target.value)}
             />
-            <Button onClick={handleChannelDiscovery}>Channel Discovery</Button>
             <Button onClick={addRequest}>New Request</Button>
           </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+          <Card className="sm:col-span-2" x-chunk="dashboard-05-chunk-0">
+            <CardHeader>
+              <CardTitle>Products</CardTitle>
+              <CardDescription>
+                Manage your products and view their sales performance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent></CardContent>
+          </Card>
+          <Card  className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
+            <CardHeader>
+              <CardTitle>History</CardTitle>
+              <CardDescription>
+                Manage your products and view their sales performance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent></CardContent>
+          </Card>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               {requests.map((request, index) => (
@@ -338,16 +370,20 @@ const Dashboard: React.FC = () => {
                   <CardContent>
                     <div className="mb-2">
                       <label className="block text-sm font-medium mb-1">
-                        Function
+                        Type
                       </label>
                       <Select
-                        value={request.function}
+                        value={request.type}
                         onValueChange={(value) =>
-                          updateRequest(index, "function", value)
+                          updateRequest(
+                            index,
+                            "type",
+                            value as "invoke" | "query"
+                          )
                         }
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select function" />
+                          <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
@@ -356,6 +392,18 @@ const Dashboard: React.FC = () => {
                           </SelectGroup>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="mb-2">
+                      <label className="block text-sm font-medium mb-1">
+                        Method
+                      </label>
+                      <Input
+                        value={request.method}
+                        onChange={(e) =>
+                          updateRequest(index, "method", e.target.value)
+                        }
+                        placeholder="Enter method (e.g. ContractClass:method)"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">
@@ -371,6 +419,7 @@ const Dashboard: React.FC = () => {
                               updateRequest(index, "args", newArgs);
                             }}
                             className="flex-grow"
+                            placeholder={`Arg ${argIndex + 1}`}
                           />
                           <Button
                             onClick={() => removeArg(index, argIndex)}
@@ -389,12 +438,18 @@ const Dashboard: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4">
-                      <Button onClick={() => deleteRequest(index)}>
-                        Delete
-                      </Button>
-                    </div>
                   </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button
+                      onClick={() => deleteRequest(index)}
+                      variant="outline"
+                    >
+                      Delete
+                    </Button>
+                    <Button onClick={() => handleSubmit(request, index)}>
+                      Submit
+                    </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
@@ -407,8 +462,8 @@ const Dashboard: React.FC = () => {
                   {history.map((item, index) => (
                     <div key={index} className="mb-4">
                       <p>
-                        <String>{item.type.toUpperCase()}:</String>{" "}
-                        {item.function}
+                        <strong>{item.type.toUpperCase()}:</strong>{" "}
+                        {item.method}
                       </p>
                       <p>
                         <strong>Args:</strong> {item.args.join(", ")}
@@ -421,12 +476,6 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
-          </div>
-          <div className="mt-4">
-            <Button onClick={() => handleSubmit("invoke")} className="mr-2">
-              Invoke
-            </Button>
-            <Button onClick={() => handleSubmit("query")}>Query</Button>
           </div>
         </div>
 
