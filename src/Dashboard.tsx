@@ -10,12 +10,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Bird, CircleUser, Rabbit, Turtle } from "lucide-react";
+import { CircleUser } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -25,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   Card,
   CardHeader,
@@ -42,10 +44,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "./AuthContext";
 import api from "@/lib/api";
+import { toast } from "@/components/ui/use-toast";
 
 interface Attribute {
   name: string;
@@ -169,6 +170,7 @@ const Dashboard: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [channelId, setChannelId] = useState("");
   const [chaincodeId, setChaincodeId] = useState("");
+  const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
 
   const addRequest = () => {
     setRequests([...requests, { type: "invoke", method: "", args: [""] }]);
@@ -205,7 +207,11 @@ const Dashboard: React.FC = () => {
 
   const handleSubmit = async (request: RequestForm, index: number) => {
     if (!channelId || !chaincodeId) {
-      alert("Please enter Channel ID and Chaincode ID");
+      toast({
+        title: "Missing information",
+        description: "Please enter Channel ID and Chaincode ID",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -225,15 +231,20 @@ const Dashboard: React.FC = () => {
 
       setHistory([newHistoryItem, ...history]);
 
-      // Optionally, clear the request form after successful submission
-      setRequests(
-        requests.map((req, i) =>
-          i === index ? { type: "invoke", method: "", args: [""] } : req
-        )
-      );
+      // 提供视觉反馈而不是清除表单
+      toast({
+        title: "Request submitted",
+        description: `${
+          request.type.charAt(0).toUpperCase() + request.type.slice(1)
+        } request for ${request.method} was successful.`,
+      });
     } catch (error) {
       console.error("Error submitting request:", error);
-      alert("Error submitting request. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to submit request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -323,7 +334,7 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
-        <h2 className="text-xl font-bold">Chaincode Invoke/Query Request</h2>
+        {/* <h2 className="text-xl font-bold">Chaincode Invoke/Query Request</h2> */}
 
         <div className="p-4">
           <div className="flex space-x-4 mb-4">
@@ -341,8 +352,9 @@ const Dashboard: React.FC = () => {
             <Button onClick={addRequest}>New Request</Button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-            <Card className="sm:col-span-2" x-chunk="dashboard-05-chunk-0">
+          <div className="grid gap-4">
+            {/* Requests Card */}
+            <Card>
               <CardHeader>
                 <CardTitle>Requests Lists</CardTitle>
                 <CardDescription>
@@ -351,14 +363,16 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    {requests.map((request, index) => (
-                      <Card key={index} className="mb-4">
-                        <CardHeader>
-                          <CardTitle>Request {index + 1}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="mb-2">
+                  {requests.map((request, index) => (
+                    <Card key={index}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">
+                          Request {index + 1}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
                             <label className="block text-sm font-medium mb-1">
                               Type
                             </label>
@@ -383,7 +397,7 @@ const Dashboard: React.FC = () => {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="mb-2">
+                          <div>
                             <label className="block text-sm font-medium mb-1">
                               Method
                             </label>
@@ -428,50 +442,79 @@ const Dashboard: React.FC = () => {
                               </div>
                             ))}
                           </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                          <Button
-                            onClick={() => deleteRequest(index)}
-                            variant="outline"
-                          >
-                            Delete
-                          </Button>
-                          <Button onClick={() => handleSubmit(request, index)}>
-                            Submit
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button
+                          onClick={() => deleteRequest(index)}
+                          variant="outline"
+                        >
+                          Delete
+                        </Button>
+                        <Button onClick={() => handleSubmit(request, index)}>
+                          Submit
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
+            {/* History Card */}
+            <Card>
               <CardHeader>
                 <CardTitle>History</CardTitle>
                 <CardDescription>
-                  Manage your products and view their sales performance.
+                  View the history of your chaincode requests and their
+                  responses.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {history.map((item, index) => (
-                  <div key={index} className="mb-4">
-                    <p>
-                      <strong>{item.type.toUpperCase()}:</strong> {item.method}
-                    </p>
-                    <p>
-                      <strong>Args:</strong> {item.args.join(", ")}
-                    </p>
-                    <pre className="bg-gray-100 p-2 rounded mt-2">
-                      {item.response}
-                    </pre>
-                  </div>
-                ))}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Args</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {history.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.type.toUpperCase()}</TableCell>
+                        <TableCell>{item.method}</TableCell>
+                        <TableCell>{item.args.join(", ")}</TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                onClick={() =>
+                                  setSelectedResponse(item.response)
+                                }
+                              >
+                                View Response
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-auto">
+                              <DialogHeader>
+                                <DialogTitle>Response Details</DialogTitle>
+                              </DialogHeader>
+                              <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap">
+                                {selectedResponse}
+                              </pre>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </div>
-
         </div>
 
         {/* Channel Discovery Dialog */}
