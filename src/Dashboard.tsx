@@ -228,26 +228,8 @@ const Dashboard: React.FC = () => {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="flex items-center justify-between p-4 bg-white shadow-sm">
-        <div className="flex items-center space-x-4 flex-grow">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">ChannelID</span>
-            <Input
-              className="w-40"
-              placeholder="Enter Channel ID"
-              value={channelId}
-              onChange={(e) => setChannelId(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">ChaincodeID</span>
-            <Input
-              className="w-40"
-              placeholder="Enter Chaincode ID"
-              value={chaincodeId}
-              onChange={(e) => setChaincodeId(e.target.value)}
-            />
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold">Chaincode Functions Test</h1>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
@@ -260,9 +242,6 @@ const Dashboard: React.FC = () => {
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>
               Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleChannelDiscovery}>
-              Channel Discovery
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
@@ -329,32 +308,25 @@ const Dashboard: React.FC = () => {
             )}
           </DialogContent>
         </Dialog>
-
-        {/* Channel Discovery Dialog */}
-        <Dialog open={isDiscoveryOpen} onOpenChange={setIsDiscoveryOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle>Channel Discovery Result</DialogTitle>
-            </DialogHeader>
-            <div className="json-viewer">
-              <pre
-                className="text-sm"
-                dangerouslySetInnerHTML={{
-                  __html: formatJSON(discoveryResult),
-                }}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
       </header>
 
       <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
+      <h2 className="text-xl font-bold">Chaincode Invoke/Query Request</h2>
+
         <div className="p-4">
-          <div className="flex justify-between items-center w-full mb-4">
-            <h2 className="text-2xl font-bold">
-              Chaincode Invoke/Query Request
-            </h2>
-            <Button onClick={addRequest}>New</Button>
+          <div className="flex space-x-4 mb-4">
+            <Input
+              placeholder="Channel ID"
+              value={channelId}
+              onChange={(e) => setChannelId(e.target.value)}
+            />
+            <Input
+              placeholder="Chaincode ID"
+              value={chaincodeId}
+              onChange={(e) => setChaincodeId(e.target.value)}
+            />
+            <Button onClick={handleChannelDiscovery}>Channel Discovery</Button>
+            <Button onClick={addRequest}>New Request</Button>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -457,6 +429,23 @@ const Dashboard: React.FC = () => {
             <Button onClick={() => handleSubmit("query")}>Query</Button>
           </div>
         </div>
+
+        {/* Channel Discovery Dialog */}
+        <Dialog open={isDiscoveryOpen} onOpenChange={setIsDiscoveryOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Channel Discovery Result</DialogTitle>
+            </DialogHeader>
+            <div className="json-viewer">
+              <pre
+                className="text-sm"
+                dangerouslySetInnerHTML={{
+                  __html: formatJSON(discoveryResult),
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
