@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -40,7 +41,7 @@ interface Identity {
   max_enrollments: number;
 }
 
-interface ApiResponse {
+interface IdentityResponse {
   response: {
     identities: Identity[];
     caname: string;
@@ -48,14 +49,15 @@ interface ApiResponse {
 }
 
 const Dashboard: React.FC = () => {
-  const [userInfo, setUserInfo] = useState<ApiResponse | null>(null);
+  const [userInfo, setUserInfo] = useState<IdentityResponse | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await api.get<ApiResponse>('/user/identities');
+        const response = await api.get<IdentityResponse>('/user/identities');
         setUserInfo(response.data);
       } catch (error) {
         console.error('Failed to fetch user info:', error);
@@ -67,7 +69,7 @@ const Dashboard: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    // Redirect to login page or perform other logout actions
+    navigate('/login');
   };
 
   const currentUser = userInfo?.response.identities[0];
