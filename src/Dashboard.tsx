@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CircleUser} from "lucide-react";
+import { CircleUser } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuth } from './AuthContext';
-import api from '@/lib/api';
+import { useAuth } from "./AuthContext";
+import api from "@/lib/api";
 
 interface Attribute {
   name: string;
@@ -45,22 +45,25 @@ interface IdentityResponse {
   response: {
     identities: Identity[];
     caname: string;
-  }
+  };
 }
 
 const Dashboard: React.FC = () => {
   const [userInfo, setUserInfo] = useState<IdentityResponse | null>(null);
+  const [channelId, setChannelId] = useState<string>("");
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = useState(false);
+  const [discoveryResult, setDiscoveryResult] = useState<any>(null);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await api.get<IdentityResponse>('/user/identities');
+        const response = await api.get<IdentityResponse>("/user/identities");
         setUserInfo(response.data);
       } catch (error) {
-        console.error('Failed to fetch user info:', error);
+        console.error("Failed to fetch user info:", error);
       }
     };
 
@@ -69,7 +72,64 @@ const Dashboard: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
+  };
+
+  const handleChannelDiscovery = async () => {
+    if (!channelId) {
+      alert("Please enter a Channel ID");
+      return;
+    }
+    try {
+      const response = await api.post(`/discover/${channelId}`);
+      setDiscoveryResult(response.data);
+      setIsDiscoveryOpen(true);
+    } catch (error) {
+      console.error("Channel discovery failed:", error);
+      alert("Channel discovery failed. Please try again.");
+    }
+  };
+
+  const formatJSON = (json: any): string => {
+    const formatCertificate = (cert: string) => {
+      return cert
+        .split("\\n")
+        .map((line) => `<span class="certificate-line">${line}</span>`)
+        .join("");
+    };
+
+    return JSON.stringify(json, null, 2)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        (match) => {
+          let cls = "number";
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+              cls = "key";
+            } else {
+              cls = "string";
+              // 检查是否是证书内容
+              if (match.includes("-----BEGIN CERTIFICATE-----")) {
+                return (
+                  '<span class="' +
+                  cls +
+                  '">' +
+                  formatCertificate(match.slice(1, -1)) +
+                  "</span>"
+                );
+              }
+            }
+          } else if (/true|false/.test(match)) {
+            cls = "boolean";
+          } else if (/null/.test(match)) {
+            cls = "null";
+          }
+          return '<span class="' + cls + '">' + match + "</span>";
+        }
+      );
   };
 
   const currentUser = userInfo?.response.identities[0];
@@ -79,7 +139,12 @@ const Dashboard: React.FC = () => {
       <div className="flex items-center space-x-4 flex-grow">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium">ChannelID</span>
-          <Input className="w-40" placeholder="Enter Channel ID" />
+          <Input
+            className="w-40"
+            placeholder="Enter Channel ID"
+            value={channelId}
+            onChange={(e) => setChannelId(e.target.value)}
+          />
         </div>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium">ChaincodeID</span>
@@ -96,13 +161,18 @@ const Dashboard: React.FC = () => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account: {currentUser?.id}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>Details</DropdownMenuItem>
-          <DropdownMenuItem>Channel Discovery</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>
+            Details
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleChannelDiscovery}>
+            Channel Discovery
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -122,10 +192,12 @@ const Dashboard: React.FC = () => {
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Affiliation</TableCell>
-                    <TableCell>{currentUser.affiliation || 'N/A'}</TableCell>
+                    <TableCell>{currentUser.affiliation || "N/A"}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Max Enrollments</TableCell>
+                    <TableCell className="font-medium">
+                      Max Enrollments
+                    </TableCell>
                     <TableCell>{currentUser.max_enrollments}</TableCell>
                   </TableRow>
                 </TableBody>
@@ -152,10 +224,27 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">CA Name: {userInfo?.response.caname}</p>
+                <p className="text-sm text-gray-500">
+                  CA Name: {userInfo?.response.caname}
+                </p>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Channel Discovery Dialog */}
+      <Dialog open={isDiscoveryOpen} onOpenChange={setIsDiscoveryOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Channel Discovery Result</DialogTitle>
+          </DialogHeader>
+          <div className="json-viewer">
+            <pre
+              className="text-sm"
+              dangerouslySetInnerHTML={{ __html: formatJSON(discoveryResult) }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </header>

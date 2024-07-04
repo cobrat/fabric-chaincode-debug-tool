@@ -83,7 +83,4 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-function setError(arg0: string) {
-  throw new Error("Function not implemented.");
-}
 
