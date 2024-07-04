@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CircleUser } from "lucide-react";
+import { Bird, CircleUser, Rabbit, Turtle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +42,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "./AuthContext";
 import api from "@/lib/api";
 
@@ -340,143 +342,136 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-          <Card className="sm:col-span-2" x-chunk="dashboard-05-chunk-0">
-            <CardHeader>
-              <CardTitle>Products</CardTitle>
-              <CardDescription>
-                Manage your products and view their sales performance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent></CardContent>
-          </Card>
-          <Card  className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
-            <CardHeader>
-              <CardTitle>History</CardTitle>
-              <CardDescription>
-                Manage your products and view their sales performance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent></CardContent>
-          </Card>
+            <Card className="sm:col-span-2" x-chunk="dashboard-05-chunk-0">
+              <CardHeader>
+                <CardTitle>Requests Lists</CardTitle>
+                <CardDescription>
+                  Setup your chaincode requests and submit them.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    {requests.map((request, index) => (
+                      <Card key={index} className="mb-4">
+                        <CardHeader>
+                          <CardTitle>Request {index + 1}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="mb-2">
+                            <label className="block text-sm font-medium mb-1">
+                              Type
+                            </label>
+                            <Select
+                              value={request.type}
+                              onValueChange={(value) =>
+                                updateRequest(
+                                  index,
+                                  "type",
+                                  value as "invoke" | "query"
+                                )
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectItem value="invoke">Invoke</SelectItem>
+                                  <SelectItem value="query">Query</SelectItem>
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="mb-2">
+                            <label className="block text-sm font-medium mb-1">
+                              Method
+                            </label>
+                            <Input
+                              value={request.method}
+                              onChange={(e) =>
+                                updateRequest(index, "method", e.target.value)
+                              }
+                              placeholder="Enter method (e.g. ContractClass:method)"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">
+                              Args
+                            </label>
+                            {request.args.map((arg, argIndex) => (
+                              <div key={argIndex} className="flex mb-2">
+                                <Input
+                                  value={arg}
+                                  onChange={(e) => {
+                                    const newArgs = [...request.args];
+                                    newArgs[argIndex] = e.target.value;
+                                    updateRequest(index, "args", newArgs);
+                                  }}
+                                  className="flex-grow"
+                                  placeholder={`Arg ${argIndex + 1}`}
+                                />
+                                <Button
+                                  onClick={() => removeArg(index, argIndex)}
+                                  className="ml-2"
+                                >
+                                  -
+                                </Button>
+                                {argIndex === request.args.length - 1 && (
+                                  <Button
+                                    onClick={() => addArg(index)}
+                                    className="ml-2"
+                                  >
+                                    +
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between">
+                          <Button
+                            onClick={() => deleteRequest(index)}
+                            variant="outline"
+                          >
+                            Delete
+                          </Button>
+                          <Button onClick={() => handleSubmit(request, index)}>
+                            Submit
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden" x-chunk="dashboard-05-chunk-4">
+              <CardHeader>
+                <CardTitle>History</CardTitle>
+                <CardDescription>
+                  Manage your products and view their sales performance.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {history.map((item, index) => (
+                  <div key={index} className="mb-4">
+                    <p>
+                      <strong>{item.type.toUpperCase()}:</strong> {item.method}
+                    </p>
+                    <p>
+                      <strong>Args:</strong> {item.args.join(", ")}
+                    </p>
+                    <pre className="bg-gray-100 p-2 rounded mt-2">
+                      {item.response}
+                    </pre>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              {requests.map((request, index) => (
-                <Card key={index} className="mb-4">
-                  <CardHeader>
-                    <CardTitle>Request {index + 1}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium mb-1">
-                        Type
-                      </label>
-                      <Select
-                        value={request.type}
-                        onValueChange={(value) =>
-                          updateRequest(
-                            index,
-                            "type",
-                            value as "invoke" | "query"
-                          )
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="invoke">Invoke</SelectItem>
-                            <SelectItem value="query">Query</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium mb-1">
-                        Method
-                      </label>
-                      <Input
-                        value={request.method}
-                        onChange={(e) =>
-                          updateRequest(index, "method", e.target.value)
-                        }
-                        placeholder="Enter method (e.g. ContractClass:method)"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Args
-                      </label>
-                      {request.args.map((arg, argIndex) => (
-                        <div key={argIndex} className="flex mb-2">
-                          <Input
-                            value={arg}
-                            onChange={(e) => {
-                              const newArgs = [...request.args];
-                              newArgs[argIndex] = e.target.value;
-                              updateRequest(index, "args", newArgs);
-                            }}
-                            className="flex-grow"
-                            placeholder={`Arg ${argIndex + 1}`}
-                          />
-                          <Button
-                            onClick={() => removeArg(index, argIndex)}
-                            className="ml-2"
-                          >
-                            -
-                          </Button>
-                          {argIndex === request.args.length - 1 && (
-                            <Button
-                              onClick={() => addArg(index)}
-                              className="ml-2"
-                            >
-                              +
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button
-                      onClick={() => deleteRequest(index)}
-                      variant="outline"
-                    >
-                      Delete
-                    </Button>
-                    <Button onClick={() => handleSubmit(request, index)}>
-                      Submit
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {history.map((item, index) => (
-                    <div key={index} className="mb-4">
-                      <p>
-                        <strong>{item.type.toUpperCase()}:</strong>{" "}
-                        {item.method}
-                      </p>
-                      <p>
-                        <strong>Args:</strong> {item.args.join(", ")}
-                      </p>
-                      <pre className="bg-gray-100 p-2 rounded mt-2">
-                        {item.response}
-                      </pre>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
         </div>
 
         {/* Channel Discovery Dialog */}
