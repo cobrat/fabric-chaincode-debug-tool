@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,43 +11,69 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "./AuthContext";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [id, setId] = useState("");
+  const [secret, setSecret] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // 这里应该有实际的登录逻辑
-    // 现在我们只是模拟登录成功
-    navigate("/dashboard");
+  const handleLogin = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      await login(id, secret);
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Failed to login. Please check your credentials and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Enroll</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enroll for bear token in api interaction.
+            Enter your ID and secret to login to your account.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="user">User</Label>
+            <Label htmlFor="id">ID</Label>
             <Input
-              id="user"
-              type="text"
-              placeholder="Username (default: admin)"
+              id="id"
+              value={id}
+              onChange={(e) => setId(e.target.value)}
               required
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="Password (default: adminpw)" required />
+            <Label htmlFor="secret">Secret</Label>
+            <Input
+              id="secret"
+              type="password"
+              value={secret}
+              onChange={(e) => setSecret(e.target.value)}
+              required
+            />
           </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleLogin} className="w-full">
-            Sign in
+          <Button onClick={handleLogin} className="w-full" disabled={loading}>
+            {loading ? "Logging in..." : "Sign in"}
           </Button>
         </CardFooter>
       </Card>
