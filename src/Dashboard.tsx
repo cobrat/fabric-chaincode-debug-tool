@@ -26,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   Card,
   CardHeader,
@@ -35,7 +34,6 @@ import {
   CardFooter,
   CardDescription,
 } from "@/components/ui/card";
-
 import {
   Select,
   SelectContent,
@@ -44,9 +42,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "./AuthContext";
 import api from "@/lib/api";
-import { toast } from "@/components/ui/use-toast";
 
 interface Attribute {
   name: string;
@@ -74,9 +81,14 @@ interface RequestForm {
   args: string[];
 }
 
-interface HistoryItem extends RequestForm {
+interface HistoryItem {
+  type: string;
+  method: string;
+  args: string[];
   response: string;
 }
+
+const ITEMS_PER_PAGE = 5;
 
 const Dashboard: React.FC = () => {
   const [userInfo, setUserInfo] = useState<IdentityResponse | null>(null);
@@ -86,6 +98,7 @@ const Dashboard: React.FC = () => {
   const [discoveryResult, setDiscoveryResult] = useState<any>(null);
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -216,36 +229,42 @@ const Dashboard: React.FC = () => {
     }
 
     try {
-      const response = await api.post(
-        `/${request.type}/${channelId}/${chaincodeId}`,
-        {
-          method: request.method,
-          args: request.args,
-        }
-      );
+      const response = await api.post(`/${request.type}/${channelId}/${chaincodeId}`, {
+        method: request.method,
+        args: request.args
+      });
 
       const newHistoryItem: HistoryItem = {
         ...request,
-        response: JSON.stringify(response.data.response, null, 2),
+        response: JSON.stringify(response.data.response, null, 2)
       };
 
       setHistory([newHistoryItem, ...history]);
 
-      // 提供视觉反馈而不是清除表单
       toast({
         title: "Request submitted",
-        description: `${
-          request.type.charAt(0).toUpperCase() + request.type.slice(1)
-        } request for ${request.method} was successful.`,
+        description: `${request.type.charAt(0).toUpperCase() + request.type.slice(1)} request for ${request.method} was successful.`,
       });
+
     } catch (error) {
-      console.error("Error submitting request:", error);
+      console.error('Error submitting request:', error);
       toast({
         title: "Error",
         description: "Failed to submit request. Please try again.",
         variant: "destructive",
       });
     }
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 计算总页数
+  const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+
+  // 获取当前页的数据
+  const getCurrentPageData = () => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return history.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   };
 
   return (
@@ -481,7 +500,7 @@ const Dashboard: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {history.map((item, index) => (
+                    {getCurrentPageData().map((item, index) => (
                       <TableRow key={index}>
                         <TableCell>{item.type.toUpperCase()}</TableCell>
                         <TableCell>{item.method}</TableCell>
@@ -512,6 +531,34 @@ const Dashboard: React.FC = () => {
                     ))}
                   </TableBody>
                 </Table>
+
+                {/* Pagination */}
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationPrevious onClick={() => setCurrentPage(prev => prev - 1)} />
+                </PaginationItem>
+              )}
+              {[...Array(totalPages)].map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(i + 1)}
+                    isActive={currentPage === i + 1}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationNext onClick={() => setCurrentPage(prev => prev + 1)} />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+        </div>
               </CardContent>
             </Card>
           </div>
