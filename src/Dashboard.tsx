@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CircleUser, MoreVertical } from "lucide-react";
+import { CircleUser} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,42 +24,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuth } from "./AuthContext";
-import api from "@/lib/api";
+import { useAuth } from './AuthContext';
+import api from '@/lib/api';
+
+interface Attribute {
+  name: string;
+  value: string;
+}
 
 interface Identity {
-  affiliation: string;
   id: string;
   type: string;
-  attrs: string[];
+  affiliation: string;
+  attrs: Attribute[];
   max_enrollments: number;
 }
 
+interface ApiResponse {
+  response: {
+    identities: Identity[];
+    caname: string;
+  }
+}
+
 const Dashboard: React.FC = () => {
-  const [identities, setIdentities] = useState<Identity[]>([]);
-  const [currentUser, setCurrentUser] = useState<Identity | null>(null);
+  const [userInfo, setUserInfo] = useState<ApiResponse | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const { logout } = useAuth();
 
   useEffect(() => {
-    const fetchIdentities = async () => {
+    const fetchUserInfo = async () => {
       try {
-        const response = await api.get("/user/identities");
-        setIdentities(response.data.response.identities);
-        // Assume the first identity is the current user
-        setCurrentUser(response.data.response.identities[0]);
+        const response = await api.get<ApiResponse>('/user/identities');
+        setUserInfo(response.data);
       } catch (error) {
-        console.error("Failed to fetch identities:", error);
+        console.error('Failed to fetch user info:', error);
       }
     };
 
-    fetchIdentities();
+    fetchUserInfo();
   }, []);
 
   const handleLogout = () => {
     logout();
     // Redirect to login page or perform other logout actions
   };
+
+  const currentUser = userInfo?.response.identities[0];
 
   return (
     <header className="flex items-center justify-between p-4 bg-white shadow-sm">
@@ -83,9 +94,7 @@ const Dashboard: React.FC = () => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account: {currentUser?.id}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>
-            Details
-          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>Details</DropdownMenuItem>
           <DropdownMenuItem>Channel Discovery</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
@@ -93,31 +102,58 @@ const Dashboard: React.FC = () => {
       </DropdownMenu>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
           </DialogHeader>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Property</TableHead>
-                <TableHead>Value</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentUser &&
-                Object.entries(currentUser).map(([key, value]) => (
-                  <TableRow key={key}>
-                    <TableCell>{key}</TableCell>
-                    <TableCell>
-                      {Array.isArray(value)
-                        ? value.join(", ")
-                        : value.toString()}
-                    </TableCell>
+          {currentUser && (
+            <div className="space-y-4">
+              <Table>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">ID</TableCell>
+                    <TableCell>{currentUser.id}</TableCell>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+                  <TableRow>
+                    <TableCell className="font-medium">Type</TableCell>
+                    <TableCell>{currentUser.type}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Affiliation</TableCell>
+                    <TableCell>{currentUser.affiliation || 'N/A'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Max Enrollments</TableCell>
+                    <TableCell>{currentUser.max_enrollments}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Attributes</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Value</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentUser.attrs.map((attr, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{attr.name}</TableCell>
+                        <TableCell>{attr.value}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">CA Name: {userInfo?.response.caname}</p>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </header>
