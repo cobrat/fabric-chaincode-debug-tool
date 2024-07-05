@@ -228,25 +228,29 @@ const Dashboard: React.FC = () => {
     }
 
     try {
-      const response = await api.post(`/${request.type}/${channelId}/${chaincodeId}`, {
-        method: request.method,
-        args: request.args
-      });
+      const response = await api.post(
+        `/${request.type}/${channelId}/${chaincodeId}`,
+        {
+          method: request.method,
+          args: request.args,
+        }
+      );
 
       const newHistoryItem: HistoryItem = {
         ...request,
-        response: JSON.stringify(response.data.response, null, 2)
+        response: JSON.stringify(response.data.response, null, 2),
       };
 
       setHistory([newHistoryItem, ...history]);
 
       toast({
         title: "Request submitted",
-        description: `${request.type.charAt(0).toUpperCase() + request.type.slice(1)} request for ${request.method} was successful.`,
+        description: `${
+          request.type.charAt(0).toUpperCase() + request.type.slice(1)
+        } request for ${request.method} was successful.`,
       });
-
     } catch (error) {
-      console.error('Error submitting request:', error);
+      console.error("Error submitting request:", error);
       toast({
         title: "Error",
         description: "Failed to submit request. Please try again.",
@@ -361,23 +365,27 @@ const Dashboard: React.FC = () => {
               value={channelId}
               onChange={(e) => setChannelId(e.target.value)}
             />
-            <Button onClick={handleChannelDiscovery}>Channel Discovery</Button>
             <Input
               placeholder="Chaincode ID"
               value={chaincodeId}
               onChange={(e) => setChaincodeId(e.target.value)}
             />
-            <Button onClick={addRequest}>New Request</Button>
+            <Button onClick={handleChannelDiscovery}>Channel Discovery</Button>
           </div>
 
           <div className="grid gap-4">
             {/* Requests Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Requests Lists</CardTitle>
-                <CardDescription>
-                  Setup your chaincode requests and submit them.
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Requests Lists</CardTitle>
+                    <CardDescription>
+                      Setup your chaincode requests and submit them.
+                    </CardDescription>
+                  </div>
+                  <Button onClick={addRequest}>New Request</Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -532,32 +540,36 @@ const Dashboard: React.FC = () => {
                 </Table>
 
                 {/* Pagination */}
-        <div className="mt-4">
-          <Pagination>
-            <PaginationContent>
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationPrevious onClick={() => setCurrentPage(prev => prev - 1)} />
-                </PaginationItem>
-              )}
-              {[...Array(totalPages)].map((_, i) => (
-                <PaginationItem key={i}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(i + 1)}
-                    isActive={currentPage === i + 1}
-                  >
-                    {i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              {currentPage < totalPages && (
-                <PaginationItem>
-                  <PaginationNext onClick={() => setCurrentPage(prev => prev + 1)} />
-                </PaginationItem>
-              )}
-            </PaginationContent>
-          </Pagination>
-        </div>
+                <div className="mt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      {currentPage > 1 && (
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage((prev) => prev - 1)}
+                          />
+                        </PaginationItem>
+                      )}
+                      {[...Array(totalPages)].map((_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(i + 1)}
+                            isActive={currentPage === i + 1}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      {currentPage < totalPages && (
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage((prev) => prev + 1)}
+                          />
+                        </PaginationItem>
+                      )}
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </CardContent>
             </Card>
           </div>
