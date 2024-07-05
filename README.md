@@ -1,4 +1,4 @@
-# Fabric Smart Contract Debugger
+# Fabric Chaincode Debugger
 
 This project provides a comprehensive script for managing a Fablo network, associated chaincode, and a web application. It simplifies the process of setting up and running a blockchain environment for development and testing purposes.
 
@@ -54,8 +54,10 @@ To stop and remove the current Fablo network:
 To build and run the chaincode:
 
 ```
-./script.sh start-chaincode
+./script.sh start-chaincode [optional_chaincode_path]
 ```
+
+If no path is specified, the script will use the default path: `./fablo/chaincodes/asset-transfer-go`
 
 ### Manage Web Application
 
@@ -70,20 +72,32 @@ To install dependencies and start the web application:
 - `check-env`: Checks if all required software is installed.
 - `start-network`: Starts the Fablo network using the `dev-mode.json` configuration.
 - `stop-network`: Stops and removes the current Fablo network.
-- `start-chaincode`: Builds and runs the chaincode located in `./fablo/chaincodes/asset-transfer-go`.
+- `start-chaincode [path]`: Builds and runs the chaincode. You can optionally specify a custom path to the chaincode directory.
 - `start-webapp`: Installs npm packages and starts the web application in development mode.
 
 ## Directory Structure
 
-- `./fablo`: Contains the Fablo network configuration and chaincode.
-- `./fablo/chaincodes/asset-transfer-go`: Contains the Go chaincode for asset transfer.
-- `./`: Root directory containing the web application files.
+- `./fablo`: Contains the Fablo network configuration and default chaincode.
+- `./fablo/chaincodes/asset-transfer-go`: Contains the default Go chaincode for asset transfer.
+- `./`: Root directory containing the web application files and management script.
+
+## Customizing Chaincode Path
+
+You can specify a custom path for your chaincode when using the `start-chaincode` command. This is useful if you have multiple chaincode implementations or if your chaincode is located in a different directory.
+
+Example:
+```
+./script.sh start-chaincode /path/to/your/custom/chaincode
+```
+
+If no custom path is provided, the script will use the default path (`./fablo/chaincodes/asset-transfer-go`).
 
 ## Notes
 
 - The script will prompt for confirmation before performing actions that might affect the current network state.
 - Ensure you're in the correct directory when running the script.
 - If you encounter any issues, check the console output for error messages and ensure all prerequisites are correctly installed.
+- When using a custom chaincode path, make sure the specified directory contains a valid Go chaincode project.
 
 ## Contributing
 

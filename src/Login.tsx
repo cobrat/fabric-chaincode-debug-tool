@@ -20,6 +20,8 @@ const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError("");
     try {
@@ -37,55 +39,57 @@ const Login: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">Login</CardTitle>
-            <ModeToggle />
-          </div>
-          <CardDescription>
-            Enter your ID, secret, and API base URL to login to your account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="baseURL">API Base URL</Label>
-            <Input
-              id="baseURL"
-              value={baseURL}
-              onChange={(e) => setBaseURL(e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="id">ID</Label>
-            <Input
-              id="id"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="secret">Secret</Label>
-            <Input
-              id="secret"
-              type="password"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-              required
-            />
-          </div>
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleLogin} className="w-full" disabled={loading}>
-            {loading ? "Logging in..." : "Sign in"}
-          </Button>
-        </CardFooter>
+        <form onSubmit={handleLogin}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl">Login</CardTitle>
+              <ModeToggle />
+            </div>
+            <CardDescription>
+              Enter your ID, secret, and API base URL to login to your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="baseURL">API Base URL</Label>
+              <Input
+                id="baseURL"
+                value={baseURL}
+                onChange={(e) => setBaseURL(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="id">ID</Label>
+              <Input
+                id="id"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="secret">Secret</Label>
+              <Input
+                id="secret"
+                type="password"
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                required
+              />
+            </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Sign in"}
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

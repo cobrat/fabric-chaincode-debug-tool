@@ -276,25 +276,29 @@ const Dashboard: React.FC = () => {
       <header className="flex items-center justify-between p-4 bg-background shadow-sm">
         <h1 className="text-2xl font-bold">Chaincode Functions Test</h1>
 
-        <div>
-        <ModeToggle />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account: {currentUser?.id}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>
-              Details
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center space-x-4">
+          <ModeToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full">
+                <CircleUser className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>
+                My Account: {currentUser?.id}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>
+                Details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={handleLogout}>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Details Dialog */}
