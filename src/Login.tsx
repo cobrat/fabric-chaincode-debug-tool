@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "./AuthContext";
+import { ModeToggle } from "./ModeToggle";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -21,27 +22,32 @@ const Login: React.FC = () => {
   const [id, setId] = useState("");
   const [secret, setSecret] = useState("");
   const [error, setError] = useState<string>("");
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
     try {
       await login(id, secret);
-      // 登录成功后，重定向到原始目标URL或默认到dashboard
       const origin = (location.state as any)?.from?.pathname || '/dashboard';
       navigate(origin);
     } catch (error) {
       console.error('Login failed:', error);
-      // 处理登录错误，例如显示错误消息
-      setError('Login failed: ' + error);
+      setError('Login failed. Please check your credentials and try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl">Login</CardTitle>
+            <ModeToggle />
+          </div>
           <CardDescription>
             Enter your ID and secret to login to your account.
           </CardDescription>
@@ -83,4 +89,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

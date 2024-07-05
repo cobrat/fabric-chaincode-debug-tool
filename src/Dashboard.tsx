@@ -53,6 +53,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "./AuthContext";
 import api from "@/lib/api";
+import { ModeToggle } from "./ModeToggle";
 
 interface Attribute {
   name: string;
@@ -272,9 +273,11 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="flex items-center justify-between p-4 bg-white shadow-sm">
+      <header className="flex items-center justify-between p-4 bg-background shadow-sm">
         <h1 className="text-2xl font-bold">Chaincode Functions Test</h1>
 
+        <div>
+        <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
@@ -292,6 +295,7 @@ const Dashboard: React.FC = () => {
             <DropdownMenuItem onSelect={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
 
         {/* Details Dialog */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
