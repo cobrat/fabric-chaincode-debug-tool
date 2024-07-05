@@ -9,6 +9,7 @@ import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
+import { Toaster } from "@/components/ui/toaster";
 
 const App: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
+      <Toaster />
     </AuthProvider>
   );
 };

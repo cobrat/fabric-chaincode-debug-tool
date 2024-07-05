@@ -51,7 +51,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useToast } from "@/components/ui/use-toast";
-import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "./AuthContext";
 import api from "@/lib/api";
 
