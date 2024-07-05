@@ -1,16 +1,26 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-} from "react-router-dom";
-import { AuthProvider } from "./AuthContext";
-import ProtectedRoute from "./ProtectedRoute";
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./AuthContext";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "./ThemeProvider";
+
+const RootRedirect: React.FC = () => {
+  const { token } = useAuth();
+  return token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+};
+
+const ProtectedRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
+  const { token } = useAuth();
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return element;
+};
 
 const App: React.FC = () => {
   return (
@@ -19,11 +29,9 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              {/* 添加其他需要保护的路由 */}
-            </Route>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
         <Toaster />

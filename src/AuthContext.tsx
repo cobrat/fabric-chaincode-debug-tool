@@ -1,10 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import api from '@/lib/api';
+import api, { setBaseURL } from '@/lib/api';
 
 interface AuthContextType {
   token: string | null;
   loading: boolean;
-  login: (id: string, secret: string) => Promise<void>;
+  login: (id: string, secret: string, baseURL: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<boolean>;
 }
@@ -19,13 +19,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = async (id: string, secret: string) => {
+  const login = async (id: string, secret: string, baseURL: string) => {
     setLoading(true);
     try {
+      setBaseURL(baseURL);
       const response = await api.post('/user/enroll', { id, secret });
       const newToken = response.data.token;
       setToken(newToken);
       localStorage.setItem('token', newToken);
+      localStorage.setItem('baseURL', baseURL);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -37,12 +39,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('baseURL');
   };
 
   const checkAuth = async () => {
     setLoading(true);
     try {
-      // 使用 /user/identities 接口来验证 token
+      const savedBaseURL = localStorage.getItem('baseURL');
+      if (savedBaseURL) {
+        setBaseURL(savedBaseURL);
+      }
       await api.get('/user/identities');
       setLoading(false);
       return true;

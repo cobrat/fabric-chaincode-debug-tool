@@ -1,14 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,6 +14,7 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const [id, setId] = useState("");
   const [secret, setSecret] = useState("");
+  const [baseURL, setBaseURL] = useState("http://localhost:8801");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -29,7 +23,7 @@ const Login: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      await login(id, secret);
+      await login(id, secret, baseURL);
       const origin = (location.state as any)?.from?.pathname || '/dashboard';
       navigate(origin);
     } catch (error) {
@@ -49,10 +43,19 @@ const Login: React.FC = () => {
             <ModeToggle />
           </div>
           <CardDescription>
-            Enter your ID and secret to login to your account.
+            Enter your ID, secret, and API base URL to login to your account.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="baseURL">API Base URL</Label>
+            <Input
+              id="baseURL"
+              value={baseURL}
+              onChange={(e) => setBaseURL(e.target.value)}
+              required
+            />
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="id">ID</Label>
             <Input

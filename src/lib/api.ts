@@ -1,13 +1,15 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:8801",
-});
+const api = axios.create();
 
 // Token 过期时间（毫秒）
 const TOKEN_EXPIRY_TIME = 10 * 60 * 1000; // 10 minutes
 
 let tokenExpiryTime: number | null = null;
+
+export const setBaseURL = (url: string) => {
+  api.defaults.baseURL = url;
+};
 
 api.interceptors.request.use(
   async (config) => {
