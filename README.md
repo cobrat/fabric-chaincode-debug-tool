@@ -1,4 +1,4 @@
-# Fabric Chaincode Debugger
+# Fabric Chaincode Debug Tool
 
 This project provides a comprehensive script for managing a Fablo network, associated chaincode, and a web application. It simplifies the process of setting up and running a blockchain environment for development and testing purposes.
 
