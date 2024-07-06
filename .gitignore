@@ -25,4 +25,4 @@ dist-ssr
 
 # Fablo
 fablo-target
-dev-test
+fablo/chaincodes/asset-transfer-go/dev-test
