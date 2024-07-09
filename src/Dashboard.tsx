@@ -86,6 +86,7 @@ interface HistoryItem {
   method: string;
   args: string[];
   response: string;
+  status: "success" | "error";
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -240,6 +241,7 @@ const Dashboard: React.FC = () => {
       const newHistoryItem: HistoryItem = {
         ...request,
         response: JSON.stringify(response.data.response, null, 2),
+        status: "success",
       };
 
       setHistory([newHistoryItem, ...history]);
@@ -252,6 +254,15 @@ const Dashboard: React.FC = () => {
       });
     } catch (error) {
       console.error("Error submitting request:", error);
+
+      const newHistoryItem: HistoryItem = {
+        ...request,
+        response: error instanceof Error ? error.message : String(error),
+        status: "error",
+      };
+
+      setHistory([newHistoryItem, ...history]);
+
       toast({
         title: "Error",
         description: "Failed to submit request. Please try again.",
@@ -511,6 +522,7 @@ const Dashboard: React.FC = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Method</TableHead>
                       <TableHead>Args</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -520,6 +532,17 @@ const Dashboard: React.FC = () => {
                         <TableCell>{item.type.toUpperCase()}</TableCell>
                         <TableCell>{item.method}</TableCell>
                         <TableCell>{item.args.join(", ")}</TableCell>
+                        <TableCell>
+                          <span
+                            className={
+                              item.status === "success"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }
+                          >
+                            {item.status.toUpperCase()}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <Dialog>
                             <DialogTrigger asChild>
@@ -534,9 +557,20 @@ const Dashboard: React.FC = () => {
                             </DialogTrigger>
                             <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-auto">
                               <DialogHeader>
-                                <DialogTitle>Response Details</DialogTitle>
+                                <DialogTitle>
+                                  {item.status === "success"
+                                    ? "Response"
+                                    : "Error"}{" "}
+                                  Details
+                                </DialogTitle>
                               </DialogHeader>
-                              <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap">
+                              <pre
+                                className={`p-4 rounded whitespace-pre-wrap ${
+                                  item.status === "success"
+                                    ? "bg-green-100"
+                                    : "bg-red-100"
+                                }`}
+                              >
                                 {selectedResponse}
                               </pre>
                             </DialogContent>
