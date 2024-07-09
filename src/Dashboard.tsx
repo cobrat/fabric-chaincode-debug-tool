@@ -87,8 +87,8 @@ interface HistoryItem {
   args: string[];
   response: string;
   status: "success" | "error";
+  errorMessage?: string; // 新增字段，用于存储错误消息
 }
-
 const ITEMS_PER_PAGE = 5;
 
 const Dashboard: React.FC = () => {
@@ -184,7 +184,9 @@ const Dashboard: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [channelId, setChannelId] = useState("");
   const [chaincodeId, setChaincodeId] = useState("");
-  const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
+  const [selectedResponse, setSelectedResponse] = useState<HistoryItem | null>(
+    null
+  );
 
   const addRequest = () => {
     setRequests([...requests, { type: "invoke", method: "", args: [""] }]);
@@ -255,17 +257,32 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error("Error submitting request:", error);
 
+      let errorResponse = "";
+      let errorMessage = "";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        if ("response" in error && error.response) {
+          // Axios error
+          const axiosError = error as any;
+          errorResponse = JSON.stringify(axiosError.response.data, null, 2);
+        }
+      } else {
+        errorMessage = String(error);
+      }
+
       const newHistoryItem: HistoryItem = {
         ...request,
-        response: error instanceof Error ? error.message : String(error),
+        response: errorResponse,
         status: "error",
+        errorMessage: errorMessage,
       };
 
       setHistory([newHistoryItem, ...history]);
 
       toast({
         title: "Error",
-        description: "Failed to submit request. Please try again.",
+        description: "Failed to submit request. Please check the details.",
         variant: "destructive",
       });
     }
@@ -548,31 +565,45 @@ const Dashboard: React.FC = () => {
                             <DialogTrigger asChild>
                               <Button
                                 variant="outline"
-                                onClick={() =>
-                                  setSelectedResponse(item.response)
-                                }
+                                onClick={() => setSelectedResponse(item)}
                               >
-                                View Response
+                                View Details
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-auto">
                               <DialogHeader>
                                 <DialogTitle>
-                                  {item.status === "success"
+                                  {selectedResponse?.status === "success"
                                     ? "Response"
                                     : "Error"}{" "}
                                   Details
                                 </DialogTitle>
                               </DialogHeader>
-                              <pre
-                                className={`p-4 rounded whitespace-pre-wrap ${
-                                  item.status === "success"
+                              <div
+                                className={`p-4 rounded ${
+                                  selectedResponse?.status === "success"
                                     ? "bg-green-100"
                                     : "bg-red-100"
                                 }`}
                               >
-                                {selectedResponse}
-                              </pre>
+                                {selectedResponse?.status === "error" &&
+                                  selectedResponse.errorMessage && (
+                                    <div className="mb-4">
+                                      <h4 className="font-bold">
+                                        Error Message:
+                                      </h4>
+                                      <p>{selectedResponse.errorMessage}</p>
+                                    </div>
+                                  )}
+                                <h4 className="font-bold">
+                                  {selectedResponse?.status === "success"
+                                    ? "Response:"
+                                    : "Error Response:"}
+                                </h4>
+                                <pre className="whitespace-pre-wrap">
+                                  {selectedResponse?.response}
+                                </pre>
+                              </div>
                             </DialogContent>
                           </Dialog>
                         </TableCell>
