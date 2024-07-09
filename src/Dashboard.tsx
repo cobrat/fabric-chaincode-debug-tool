@@ -86,8 +86,9 @@ interface HistoryItem {
   method: string;
   args: string[];
   response: string;
+  status: "success" | "error";
+  errorMessage?: string; // 新增字段，用于存储错误消息
 }
-
 const ITEMS_PER_PAGE = 5;
 
 const Dashboard: React.FC = () => {
@@ -183,7 +184,9 @@ const Dashboard: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [channelId, setChannelId] = useState("");
   const [chaincodeId, setChaincodeId] = useState("");
-  const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
+  const [selectedResponse, setSelectedResponse] = useState<HistoryItem | null>(
+    null
+  );
 
   const addRequest = () => {
     setRequests([...requests, { type: "invoke", method: "", args: [""] }]);
@@ -240,6 +243,7 @@ const Dashboard: React.FC = () => {
       const newHistoryItem: HistoryItem = {
         ...request,
         response: JSON.stringify(response.data.response, null, 2),
+        status: "success",
       };
 
       setHistory([newHistoryItem, ...history]);
@@ -252,9 +256,33 @@ const Dashboard: React.FC = () => {
       });
     } catch (error) {
       console.error("Error submitting request:", error);
+
+      let errorResponse = "";
+      let errorMessage = "";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        if ("response" in error && error.response) {
+          // Axios error
+          const axiosError = error as any;
+          errorResponse = JSON.stringify(axiosError.response.data, null, 2);
+        }
+      } else {
+        errorMessage = String(error);
+      }
+
+      const newHistoryItem: HistoryItem = {
+        ...request,
+        response: errorResponse,
+        status: "error",
+        errorMessage: errorMessage,
+      };
+
+      setHistory([newHistoryItem, ...history]);
+
       toast({
         title: "Error",
-        description: "Failed to submit request. Please try again.",
+        description: "Failed to submit request. Please check the details.",
         variant: "destructive",
       });
     }
@@ -511,6 +539,7 @@ const Dashboard: React.FC = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Method</TableHead>
                       <TableHead>Args</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -521,24 +550,60 @@ const Dashboard: React.FC = () => {
                         <TableCell>{item.method}</TableCell>
                         <TableCell>{item.args.join(", ")}</TableCell>
                         <TableCell>
+                          <span
+                            className={
+                              item.status === "success"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }
+                          >
+                            {item.status.toUpperCase()}
+                          </span>
+                        </TableCell>
+                        <TableCell>
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button
                                 variant="outline"
-                                onClick={() =>
-                                  setSelectedResponse(item.response)
-                                }
+                                onClick={() => setSelectedResponse(item)}
                               >
-                                View Response
+                                View Details
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-auto">
                               <DialogHeader>
-                                <DialogTitle>Response Details</DialogTitle>
+                                <DialogTitle>
+                                  {selectedResponse?.status === "success"
+                                    ? "Response"
+                                    : "Error"}{" "}
+                                  Details
+                                </DialogTitle>
                               </DialogHeader>
-                              <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap">
-                                {selectedResponse}
-                              </pre>
+                              <div
+                                className={`p-4 rounded ${
+                                  selectedResponse?.status === "success"
+                                    ? "bg-green-100"
+                                    : "bg-red-100"
+                                }`}
+                              >
+                                {selectedResponse?.status === "error" &&
+                                  selectedResponse.errorMessage && (
+                                    <div className="mb-4">
+                                      <h4 className="font-bold">
+                                        Error Message:
+                                      </h4>
+                                      <p>{selectedResponse.errorMessage}</p>
+                                    </div>
+                                  )}
+                                <h4 className="font-bold">
+                                  {selectedResponse?.status === "success"
+                                    ? "Response:"
+                                    : "Error Response:"}
+                                </h4>
+                                <pre className="whitespace-pre-wrap">
+                                  {selectedResponse?.response}
+                                </pre>
+                              </div>
                             </DialogContent>
                           </Dialog>
                         </TableCell>
